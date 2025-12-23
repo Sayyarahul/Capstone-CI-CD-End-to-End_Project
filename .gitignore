@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+
+# Backups
+backups/
+
+# Docker
+*.log
+
+# OS
+.DS_Store
