@@ -12,7 +12,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 🔐 Login using CLI (NOT docker/login-action)
+    #  Login using CLI (NOT docker/login-action)
     - name: Docker Login
       run: |
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
@@ -28,12 +28,12 @@ jobs:
       run: |
         docker build ./frontend -t rahulsayya/frontend:latest
 
-    # 📤 Push backend
+    #  Push backend
     - name: Push Backend Image
       run: |
         docker push rahulsayya/backend:latest
 
-    # 📤 Push frontend
+    #  Push frontend
     - name: Push Frontend Image
       run: |
         docker push rahulsayya/frontend:latest
