@@ -2,7 +2,7 @@ name: CI-CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-test-scan-push:
@@ -19,26 +19,25 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build Backend Image
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest ./backend
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest ./backend
 
     - name: Build Frontend Image
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest ./frontend
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest ./frontend
 
     - name: Scan Backend Image (Trivy)
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/backend:latest
         exit-code: '0'
 
     - name: Scan Frontend Image (Trivy)
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/frontend:latest
         exit-code: '0'
 
-    - name: Push Images to Docker Hub
-      run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
-        docker push ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+    - name: Push Backend Image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
+
+    - name: Push Frontend Image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
