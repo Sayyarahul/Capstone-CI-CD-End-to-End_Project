@@ -18,12 +18,12 @@ jobs:
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
           -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    # 🏗 Build backend
+    # Build backend
     - name: Build Backend Image
       run: |
         docker build ./backend -t rahulsayya/backend:latest
 
-    # 🏗 Build frontend
+    #  Build frontend
     - name: Build Frontend Image
       run: |
         docker build ./frontend -t rahulsayya/frontend:latest
