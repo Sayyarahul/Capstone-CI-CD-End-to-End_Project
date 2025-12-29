@@ -19,18 +19,10 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build Backend Image
-      run: |
-        docker buildx build \
-          --load \
-          -t ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest \
-          ./backend
+      run: docker buildx build --load -t ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest ./backend
 
     - name: Build Frontend Image
-      run: |
-        docker buildx build \
-          --load \
-          -t ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest \
-          ./frontend
+      run: docker buildx build --load -t ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest ./frontend
 
     - name: Scan Backend Image (Trivy)
       uses: aquasecurity/trivy-action@master
