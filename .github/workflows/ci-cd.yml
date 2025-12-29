@@ -2,52 +2,46 @@ name: CI-CD Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
-  build-test-push:
+  build-test-scan-push:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    #  Login using CLI (NOT docker/login-action)
-    - name: Docker Login
-      run: |
-        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
-          -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # Build backend
     - name: Build Backend Image
-      run: |
-        docker build ./backend -t rahulsayya/backend:latest
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest ./backend
 
-    #  Build frontend
     - name: Build Frontend Image
-      run: |
-        docker build ./frontend -t rahulsayya/frontend:latest
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest ./frontend
 
-    #Scan Backend Image(Trivy)
     - name: Scan Backend Image (Trivy)
       uses: aquasecurity/trivy-action@master
-       with:
-      image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
-      exit-code: '0'
-    
-     # scan Frontend Image (Trivy)
-      - name: Scan Frontend Image (Trivy)
-        uses: aquasecurity/trivy-action@master
-         with:
-        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+      with:
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+        format: table
         exit-code: '0'
-    
-    #  Push backend
-    - name: Push Backend Image
-      run: |
-        docker push rahulsayya/backend:latest
+        severity: 'CRITICAL,HIGH'
 
-    #  Push frontend
+    - name: Scan Frontend Image (Trivy)
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+        format: table
+        exit-code: '0'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Push Backend Image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+
     - name: Push Frontend Image
-      run: |
-        docker push rahulsayya/frontend:latest
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
