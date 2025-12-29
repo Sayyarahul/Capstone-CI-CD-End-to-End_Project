@@ -28,6 +28,20 @@ jobs:
       run: |
         docker build ./frontend -t rahulsayya/frontend:latest
 
+    #Scan Backend Image(Trivy)
+    - name: Scan Backend Image (Trivy)
+      uses: aquasecurity/trivy-action@master
+       with:
+      image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+      exit-code: '0'
+    
+     # scan Frontend Image (Trivy)
+      - name: Scan Frontend Image (Trivy)
+        uses: aquasecurity/trivy-action@master
+         with:
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+        exit-code: '0'
+    
     #  Push backend
     - name: Push Backend Image
       run: |
