@@ -1,4 +1,3 @@
-
 name: CI-CD Pipeline
 
 on:
@@ -19,7 +18,7 @@ jobs:
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKER_USERNAME }}
+        username: rahulsayya
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Build Backend Image
@@ -27,31 +26,31 @@ jobs:
       with:
         context: ./backend
         load: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+        tags: rahulsayya/capstone-backend:latest
 
     - name: Build Frontend Image
       uses: docker/build-push-action@v5
       with:
         context: ./frontend
         load: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+        tags: rahulsayya/capstone-frontend:latest
 
     - name: Scan Backend Image (Trivy)
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+        image-ref: rahulsayya/capstone-backend:latest
         exit-code: "0"
         severity: "CRITICAL,HIGH"
 
     - name: Scan Frontend Image (Trivy)
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+        image-ref: rahulsayya/capstone-frontend:latest
         exit-code: "0"
         severity: "CRITICAL,HIGH"
 
     - name: Push Backend Image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/capstone-backend:latest
+      run: docker push rahulsayya/capstone-backend:latest
 
     - name: Push Frontend Image
-      run: docker push ${{ secrets.DOCKER_USERNAME }}/capstone-frontend:latest
+      run: docker push rahulsayya/capstone-frontend:latest
