@@ -1,19 +1,17 @@
-version: "3.8"
-
 services:
   backend:
-    image: sayyarahul/capstone-backend:latest
-    container_name: backend-prod
+    image: rahulsayya/capstone-backend:latest
+    container_name: capstone-backend
     ports:
-      - "5000:5000"
+      - "8081:5000"
     depends_on:
       - db
     networks:
       - app-net
 
   frontend:
-    image: sayyarahul/capstone-frontend:latest
-    container_name: frontend-prod
+    image: rahulsayya/capstone-frontend:latest
+    container_name: capstone-frontend
     ports:
       - "8080:80"
     depends_on:
@@ -23,7 +21,7 @@ services:
 
   db:
     image: postgres:15
-    container_name: db-prod
+    container_name: capstone-db
     environment:
       POSTGRES_USER: appuser
       POSTGRES_PASSWORD: password

@@ -13,3 +13,6 @@ backups/
 
 # OS
 .DS_Store
+
+# GitHub self-hosted runner files
+actions-runner/

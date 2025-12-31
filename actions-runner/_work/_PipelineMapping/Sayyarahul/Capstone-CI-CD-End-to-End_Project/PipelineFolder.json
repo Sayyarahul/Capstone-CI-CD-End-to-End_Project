@@ -1,0 +1,12 @@
+﻿{
+  "repositoryName": "Sayyarahul/Capstone-CI-CD-End-to-End_Project",
+  "pipelineDirectory": "Capstone-CI-CD-End-to-End_Project",
+  "workspaceDirectory": "Capstone-CI-CD-End-to-End_Project\\Capstone-CI-CD-End-to-End_Project",
+  "repositories": {
+    "Sayyarahul/Capstone-CI-CD-End-to-End_Project": {
+      "repositoryPath": "Capstone-CI-CD-End-to-End_Project\\Capstone-CI-CD-End-to-End_Project",
+      "lastRunOn": "12/31/2025 13:02:27 +05:30"
+    }
+  },
+  "lastRunOn": "12/31/2025 14:08:38 +05:30"
+}
