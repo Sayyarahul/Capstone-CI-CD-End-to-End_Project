@@ -2,7 +2,7 @@ name: CI-CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-test-scan-push:
@@ -31,13 +31,13 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-backend:latest
-          exit-code: '0'
+          exit-code: "0"
 
       - name: Scan Frontend Image (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-frontend:latest
-          exit-code: '0'
+          exit-code: "0"
 
       - name: Push Backend Image
         run: docker push rahulsayya/capstone-backend:latest
@@ -47,16 +47,16 @@ jobs:
 
 
   deploy:
+    name: Deploy to Local Server
     needs: build-test-scan-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd "/home/rahul/Capstone project_CICD End-to-End Project"
-            ./deploy.sh
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy using Docker Compose
+        run: |
+          docker-compose -f docker-compose.prod.yml down
+          docker-compose -f docker-compose.prod.yml pull
+          docker-compose -f docker-compose.prod.yml up -d
