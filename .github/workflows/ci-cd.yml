@@ -6,48 +6,67 @@ on:
 
 jobs:
   build-test-scan-push:
+    name: Build • Scan • Push
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # Checkout
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
+      # Docker setup
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
+      # DockerHub login
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Backend
+      # Build images
+      - name: Build Backend Image
         run: docker build -t rahulsayya/capstone-backend:latest ./backend
 
-      - name: Build Frontend
+      - name: Build Frontend Image
         run: docker build -t rahulsayya/capstone-frontend:latest ./frontend
 
-      - name: Scan Backend
+      #  TRIVY SECURITY SCANS (VISIBLE & CLEAR)
+      - name:  Trivy Scan – Backend Image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-backend:latest
+          severity: CRITICAL,HIGH,MEDIUM
+          format: table
           exit-code: '0'
 
-      - name: Scan Frontend
+      - name:  Trivy Scan – Frontend Image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-frontend:latest
+          severity: CRITICAL,HIGH,MEDIUM
+          format: table
           exit-code: '0'
 
-      - name: Push Backend
+      # Push images
+      - name: Push Backend Image
         run: docker push rahulsayya/capstone-backend:latest
 
-      - name: Push Frontend
+      - name: Push Frontend Image
         run: docker push rahulsayya/capstone-frontend:latest
 
+
   deploy:
+    name: Deploy to Local Server
     needs: build-test-scan-push
     runs-on: self-hosted
 
     steps:
       - name: Deploy using Docker Compose
+        shell: bash
         run: |
-          cd "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+          echo "Starting deployment..."
+          cd "/mnt/c/Users/Rahul Sayya/Capstone project_CICD End-to-End Project"
+          chmod +x deploy.sh
           ./deploy.sh
