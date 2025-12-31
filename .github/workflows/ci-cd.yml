@@ -5,6 +5,9 @@ on:
     branches: ["main"]
 
 jobs:
+# =========================
+# BUILD + SCAN + PUSH
+# =========================
   build-test-scan-push:
     name: Build, Scan & Push Images
     runs-on: ubuntu-latest
@@ -28,19 +31,22 @@ jobs:
       - name: Build Frontend Image
         run: docker build -t rahulsayya/capstone-frontend:latest ./frontend
 
+      # -------- TRIVY SCANS (VISIBLE IN JOB UI) --------
       - name: Trivy Scan Backend
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-backend:latest
-          severity: HIGH,CRITICAL
-          exit-code: '0'
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: "0"
 
       - name: Trivy Scan Frontend
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-frontend:latest
-          severity: HIGH,CRITICAL
-          exit-code: '0'
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: "0"
 
       - name: Push Backend Image
         run: docker push rahulsayya/capstone-backend:latest
@@ -49,18 +55,21 @@ jobs:
         run: docker push rahulsayya/capstone-frontend:latest
 
 
-deploy:
-  name: Deploy to Local Server
-  needs: build-test-scan-push
-  runs-on: self-hosted
+# =========================
+# DEPLOY (LOCAL WINDOWS)
+# =========================
+  deploy:
+    name: Deploy to Local Server
+    needs: build-test-scan-push
+    runs-on: self-hosted
 
-  steps:
-    - name: Deploy using Docker Compose
-      shell: cmd
-      run: |
-        echo Starting deployment...
-        cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
-        docker compose -f docker-compose.prod.yml down
-        docker compose -f docker-compose.prod.yml pull
-        docker compose -f docker-compose.prod.yml up -d
+    steps:
+      - name: Deploy using Docker Compose
+        shell: cmd
+        run: |
+          echo Starting deployment...
+          cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+          docker compose -f docker-compose.prod.yml down
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d
 
