@@ -56,17 +56,17 @@ jobs:
       - name: Push Frontend Image
         run: docker push rahulsayya/capstone-frontend:latest
 
+ deploy:
+  name: Deploy to Local Server
+  needs: build-test-scan-push
+  runs-on: self-hosted
 
-  deploy:
-    name: Deploy to Local Server
-    needs: build-test-scan-push
-    runs-on: self-hosted
+  steps:
+    - name: Deploy using Docker Compose
+      shell: bash
+      run: |
+        echo "Starting deployment..."
+        cd /mnt/c/Users/Rahul\ Sayya/Capstone\ project_CICD\ End-to-End\ Project
+        chmod +x deploy.sh
+        ./deploy.sh
 
-    steps:
-      - name: Deploy using Docker Compose
-        shell: bash
-        run: |
-          echo "Starting deployment..."
-          cd "/mnt/c/Users/Rahul Sayya/Capstone project_CICD End-to-End Project"
-          chmod +x deploy.sh
-          ./deploy.sh
