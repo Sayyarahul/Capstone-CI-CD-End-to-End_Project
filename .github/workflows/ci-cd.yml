@@ -49,17 +49,18 @@ jobs:
         run: docker push rahulsayya/capstone-frontend:latest
 
 
-  deploy:
-    name: Deploy to Local Server
-    needs: build-test-scan-push
-    runs-on: self-hosted
+deploy:
+  name: Deploy to Local Server
+  needs: build-test-scan-push
+  runs-on: self-hosted
 
-    steps:
-      - name: Deploy using Docker Compose
-        shell: pwsh
-        run: |
-          Write-Host "Starting deployment..."
-          cd "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
-          docker compose -f docker-compose.prod.yml down
-          docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml up -d
+  steps:
+    - name: Deploy using Docker Compose
+      shell: cmd
+      run: |
+        echo Starting deployment...
+        cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+        docker compose -f docker-compose.prod.yml down
+        docker compose -f docker-compose.prod.yml pull
+        docker compose -f docker-compose.prod.yml up -d
+
