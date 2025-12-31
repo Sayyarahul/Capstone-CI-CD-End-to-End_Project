@@ -54,3 +54,19 @@ jobs:
 
     - name: Push Frontend Image
       run: docker push rahulsayya/capstone-frontend:latest
+      
+        deploy:
+    - needs: build-test-scan-push
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd "/home/rahul/Capstone project_CICD End-to-End Project"
+          ./deploy.sh
+
