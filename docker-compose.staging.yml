@@ -1,40 +1,44 @@
 services:
+  db:
+    image: postgres:15
+    container_name: capstone-db-staging
+    env_file:
+      - .env.staging
+    volumes:
+      - db_data_staging:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-net
+
   backend:
-    build: ./backend
-    container_name: backend-staging
+    image: rahulsayya/capstone-backend:latest
+    container_name: capstone-backend-staging
+    env_file:
+      - .env.staging
     ports:
-      - "5001:5000"
-    environment:
-      ENV: staging
+      - "8082:5000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - app-net
 
   frontend:
-    build: ./frontend
-    container_name: frontend-staging
+    image: rahulsayya/capstone-frontend:latest
+    container_name: capstone-frontend-staging
     ports:
-      - "8081:80"
+      - "8083:80"
     depends_on:
       - backend
     networks:
       - app-net
 
-  db:
-    image: postgres:15
-    container_name: db-staging
-    environment:
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: appdb_staging
-    volumes:
-      - db_staging_data:/var/lib/postgresql/data
-    networks:
-      - app-net
-
 volumes:
-  db_staging_data:
+  db_data_staging:
 
 networks:
   app-net:

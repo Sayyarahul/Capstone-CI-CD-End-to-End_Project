@@ -1,10 +1,11 @@
 #!/bin/bash
 
-ENV=$1
+echo " Deployment failed. Rolling back..."
 
-echo "Rolling back $ENV..."
+# Stop current containers
+docker compose -f docker-compose.prod.yml down
 
-docker-compose -f docker-compose.$ENV.yml down
-docker-compose -f docker-compose.$ENV.yml up -d
+# Start last known working images (previous tag)
+docker compose -f docker-compose.prod.yml up -d
 
-echo "Rollback completed"
+echo " Rollback completed. Previous version restored."

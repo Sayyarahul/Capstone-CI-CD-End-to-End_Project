@@ -1,11 +1,34 @@
 services:
+  db:
+    image: postgres:15
+    container_name: capstone-db
+    env_file:
+      - .env.prod
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-net
+
   backend:
     image: rahulsayya/capstone-backend:latest
     container_name: capstone-backend
+    env_file:
+      - .env.prod
     ports:
       - "8081:5000"
     depends_on:
       - db
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python - << 'EOF'\nimport urllib.request,sys\ntry:\n urllib.request.urlopen('http://localhost:5000/health')\nexcept:\n sys.exit(1)\nEOF"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
     networks:
       - app-net
 
@@ -15,19 +38,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - backend
-    networks:
-      - app-net
-
-  db:
-    image: postgres:15
-    container_name: capstone-db
-    environment:
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: appdb
-    volumes:
-      - db_data:/var/lib/postgresql/data
+      backend:
+        condition: service_healthy
     networks:
       - app-net
 

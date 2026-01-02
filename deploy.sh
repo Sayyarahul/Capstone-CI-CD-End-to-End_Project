@@ -1,23 +1,22 @@
 #!/bin/bash
 set -e
 
-echo "Starting deployment..."
+echo " Starting deployment..."
 
-docker-compose -f docker-compose.prod.yml down
-docker-compose -f docker-compose.prod.yml pull
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml up -d
 
-echo "Waiting for backend health..."
+echo " Checking backend health..."
 
 for i in {1..10}; do
-  if curl -s http://localhost:8081 | grep "Backend API is running"; then
-    echo "Backend is healthy "
+  if curl -sf http://localhost:8081/health; then
+    echo " Deployment successful"
     exit 0
   fi
-  echo "Waiting... ($i)"
   sleep 3
 done
 
-echo "Health check failed after deployment "
-docker ps
+echo " Health check failed after deployment."
+./scripts/rollback.sh
 exit 1
