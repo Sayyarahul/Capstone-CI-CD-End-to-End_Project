@@ -4,10 +4,10 @@ on:
   push:
     branches: ["main"]
 
+# =========================
+# BUILD + TEST + SCAN + PUSH
+# =========================
 jobs:
-# =========================
-# BUILD + SCAN + PUSH
-# =========================
   build-test-scan-push:
     name: Build, Scan & Push Images
     runs-on: ubuntu-latest
@@ -25,13 +25,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # ---------- BUILD ----------
       - name: Build Backend Image
         run: docker build -t rahulsayya/capstone-backend:latest ./backend
 
       - name: Build Frontend Image
         run: docker build -t rahulsayya/capstone-frontend:latest ./frontend
 
-      # -------- TRIVY SCANS (VISIBLE IN JOB UI) --------
+      # ---------- SECURITY SCAN ----------
       - name: Trivy Scan Backend
         uses: aquasecurity/trivy-action@master
         with:
@@ -48,6 +49,7 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: "0"
 
+      # ---------- PUSH ----------
       - name: Push Backend Image
         run: docker push rahulsayya/capstone-backend:latest
 
@@ -56,10 +58,10 @@ jobs:
 
 
 # =========================
-# DEPLOY (LOCAL WINDOWS)
+# DEPLOY (SELF-HOSTED WINDOWS)
 # =========================
   deploy:
-    name: Deploy to Local Server
+    name: Deploy to Local Server (Prod)
     needs: build-test-scan-push
     runs-on: self-hosted
 
@@ -67,9 +69,17 @@ jobs:
       - name: Deploy using Docker Compose
         shell: cmd
         run: |
-          echo Starting deployment...
+          echo === Starting deployment ===
           cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
-          docker compose -f docker-compose.prod.yml down
+
           docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml up -d
 
+      # ---------- HEALTH CHECK ----------
+      - name: Validate Backend Health
+        shell: cmd
+        run: |
+          echo === Checking backend health ===
+          timeout /t 20 >nul
+          curl http://localhost:8081/health
