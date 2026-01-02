@@ -69,54 +69,72 @@ Frontend (Nginx)  --->  Backend (Flask)  --->  PostgreSQL
 
 ---
 ### Architecture Diagram
+* System Architecture Diagram 
 
 ```
-┌──────────────────┐
-│   Developer PC   │
-│  (Git Commit)    │
-└─────────┬────────┘
-          │
+User Browser
+     │
+     ▼
+┌────────────────────┐
+│  Frontend (Nginx)  │
+│  Port: 8080        │
+│  Static UI         │
+└─────────┬──────────┘
+          │ HTTP API Calls
           ▼
-┌────────────────────────┐
-│        GitHub          │
-│   Source Repository    │
-└─────────┬──────────────┘
-          │ Push to main
+┌────────────────────┐
+│ Backend (Flask)    │
+│ Port: 8081 → 5000  │
+│ REST APIs          │
+│ /health endpoint   │
+└─────────┬──────────┘
+          │ DB Connection
           ▼
-┌────────────────────────┐
-│   GitHub Actions (CI)  │
-│  • Build Docker Images │
-│  • Trivy Security Scan │
-│  • Push to Docker Hub  │
-└─────────┬──────────────┘
-          │ Images
-          ▼
-┌────────────────────────┐
-│      Docker Hub        │
-│  Backend & Frontend    │
-│     Docker Images      │
-└─────────┬──────────────┘
-          │ Pull Images
-          ▼
-┌────────────────────────────────────┐
-│  Self‑Hosted Windows Runner (CD)   │
-│  • Docker Compose                  │
-│  • Backend (Flask)                 │
-│  • Frontend (Nginx)                │
-│  • PostgreSQL DB                   │
-└─────────┬──────────────────────────┘
-          │
-          ▼
-┌────────────────────────┐
-│   Application Running  │
-│  Frontend :8080        │
-│  Backend  :8081        │
-│  /health endpoint      │
-└────────────────────────┘
-```
+┌────────────────────┐
+│ PostgreSQL DB      │
+│ Port: 5432         │
+│ Docker Volume      │
+└────────────────────┘
 
+```
 ---
+## Explanation 
+ - Frontend serves UI via Nginx
+ - Backend handles APIs & health checks
+ - Database persists data using volumes
+ - All services communicate via Docker network
 
+## Infrastructure Architecture (CI + CD)
+```
+Developer Machine
+      │
+      ▼
+GitHub Repository
+      │ (push to main)
+      ▼
+GitHub Actions (CI)
+      │
+      ├─ Build Docker Images
+      ├─ Run Unit Tests
+      ├─ Trivy Security Scan
+      └─ Push Images to Docker Hub
+      │
+      ▼
+Docker Hub Registry
+      │
+      ▼
+Self-Hosted Windows Runner (CD)
+      │
+      ├─ docker compose pull
+      ├─ docker compose down
+      ├─ docker compose up -d
+      └─ Health Check Validation
+      │
+      ▼
+Live Application 
+
+```
+---
 
 ##  Docker Implementation
 
@@ -264,57 +282,155 @@ LOW: x
       - Non-root containers
       - Minimal base images
       - Clean image sizes via multi-stage builds
-
-### CI-CD Pipeline Flow    
+---
+### CI Pipeline Flow (Build,Scan,Push)   
 ```
-Developer Commit (Git Push)
-          │
-          ▼
-GitHub Repository (main branch)
-          │
-          ▼
-GitHub Actions Workflow Triggered
-          │
-          ▼
-Build Stage
-  ├─ Build Backend Docker Image
-  └─ Build Frontend Docker Image
-          │
-          ▼
-Test Stage
-  ├─ Backend unit tests (Pytest)
-  └─ Frontend tests (Jest)
-          │
-          ▼
-Security Scan Stage
-  ├─ Trivy scan – Backend image
-  └─ Trivy scan – Frontend image
-          │
-          ▼
-Push Stage
-  ├─ Push backend image → Docker Hub
-  └─ Push frontend image → Docker Hub
-          │
-          ▼
-Deploy Stage (Self-Hosted Runner)
-  ├─ Pull latest Docker images
-  ├─ Stop old containers
-  ├─ Start containers using Docker Compose
-  └─ Preserve database volumes
-          │
-          ▼
-Post-Deployment Validation
-  └─ Health check via `/health` endpoint
-          │
-          ▼
-Application Live 
-Frontend → http://localhost:8080  
-Backend  → http://localhost:8081  
+Git Push
+  │
+  ▼
+Checkout Code
+  │
+  ▼
+Docker Build
+  ├─ Backend Image
+  └─ Frontend Image
+  │
+  ▼
+Unit Testing
+  ├─ Pytest (Backend)
+  └─ Jest (Frontend)
+  │
+  ▼
+Security Scan (Trivy)
+  ├─ Backend Image
+  └─ Frontend Image
+  │
+  ▼
+Push Images to Docker Hub
 
 ```
 
 ---
+## CD Pipline Flow (Deployment)
+```
+CI Success
+   │
+   ▼
+Self-Hosted Runner Triggered
+   │
+   ▼
+docker compose down
+   │
+   ▼
+docker compose pull
+   │
+   ▼
+docker compose up -d
+   │
+   ▼
+Health Check (/health)
+   │
+   ▼
+Deployment Success
+```
+---
+## Deployment Runbook (Step-by-Step)
+1. Pre-Deployment Checks
+  - Docker installed & running
+  - Docker Compose installed
+  - Docker Hub login successful
+  - Self-hosted runner is online
+ ```
+   docker --version
+   docker compose version
+   docker ps
+   ```
 
+2. Manual Deployment( Local/Server)
+```
+   chmod +x deploy.sh
+  ./deploy.sh
+```
+What deploy.sh does
+```
+docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+3. Post-Deployment Validation
+* Bankend health check
+  ```
+   curl http://localhost:8081/health
+  ```
+* Expected output
+```
+{
+  "status": "ok"
+}
+```
+* Verify containers
+```
+docker ps
+```
+4. Access Application  
+Service	   URL
+Frontend	 http://localhost:8080
+Backend 	http://localhost:8081
+Health	 http://localhost:8081/health
+
+---
+## Troubleshooting
+* Issue 1: Deploy job fails with /bin/bash: C:\Users... not found
+- Cause
+  - Windows self-hosted runner uses PowerShell
+  - Linux paths used in workflow
+* Fix
+- Use PowerShell Syntax
+```
+ shell: pwsh
+run: |
+  cd "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+  ./deploy.sh
+```
+* Issue 2: pwsh: command not found
+- Cause
+  - Running PowerShell commands on Linux runner
+- Fix
+  - Ensure deploy job runs on:
+```
+ runs-on: self-hosted
+```
+* Issue 3: Docker pull access denied
+- Cause
+  - Docker Hub login missing on server
+- Fix
+```
+docker login
+```
+* Issue 4: Health check fails but app is running
+- Cause
+  - Wrong endpoint checked
+- Fix
+  - Ensure /health endpoint exists:
+ ```
+@app.route("/health")
+def health():
+    return {"status": "ok"}
+```
+* Issue 5: Trivy scan not visible
+- Cause
+  - Trivy runs but logs collapsed
+- Fix
+- Expand steps:
+```
+Scan Backend
+Scan Frontend
+```
+- Or add:
+```
+severity: HIGH,CRITICAL
+```
+---
 ##  Local Development
 
 ```bash
@@ -393,9 +509,11 @@ Stored securely using GitHub Secrets.
 * Real CI/CD automation
 * Secure container practices
 * Production-ready Docker builds
-* Vulnerability scanning
+* Security scanning with Trivy
+* Automated deployment
 * Deployment validation
 * Debugging and pipeline recovery
+* Production-ready workflow  
 
 ---
 
