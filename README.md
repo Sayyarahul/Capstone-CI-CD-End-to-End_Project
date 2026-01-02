@@ -1,22 +1,35 @@
  ### Capstone-CI_CD-End-to-End_Project ###
 
-A production-style **CI/CD pipeline** that builds, tests, scans, and deploys a **2-tier web application** using **Docker** and **GitHub Actions**.
+A production-style **CI/CD pipeline** that builds, tests, scans, and deploys a **2-tier web application** using **Docker** and **GitHub Actions**,**Trivy**,and a **SelF-Hosted Windows** runner.
 
 ---
 
 ##  Project Overview
 
-This project demonstrates a real-world DevOps workflow where application code changes automatically trigger:
+This project demonstrates a workflow where application code changes automatically trigger:
 
 * Docker image builds
 * Unit testing inside containers
 * Security scanning with Trivy
 * Image push to Docker Hub
 * Deployment-ready artifacts
-
-The goal is to showcase **end-to-end CI/CD automation**, Docker best practices, and operational readiness.
+* Deployment using Docker Compose
+* Post-deployment health validation
+  
+The goal is to showcase **end-to-end CI/CD automation**,Secure container practices, and deployment readiness.
 
 ---
+### Tech Stack ###
+- Layer	                     Tools
+- Source Control	            GitHub
+- CI/CD	                     GitHub Actions
+- Containers	                Docker, Docker Compose
+- Security	                  Trivy
+- Registry	                  Docker Hub
+- Backend	                   Python (Flask)
+- Frontend	                  Nginx / Static UI
+- Database                  	PostgreSQL
+- Runners                    GitHub‑hosted (CI), Self‑hosted Windows (CD)
 
 ##  Architecture Overview
 
@@ -31,7 +44,7 @@ The goal is to showcase **end-to-end CI/CD automation**, Docker best practices, 
 * **Backend**: 
   - Python Flask application
   - Exposed on port 5000
-  - Provides APls and health endpoint
+  - Provides APls and /health endpoint
   - Connects to database
   
 * **Database**:
@@ -55,6 +68,55 @@ Frontend (Nginx)  --->  Backend (Flask)  --->  PostgreSQL
 ```
 
 ---
+### Architecture Diagram
+
+```
+┌──────────────────┐
+│   Developer PC   │
+│  (Git Commit)    │
+└─────────┬────────┘
+          │
+          ▼
+┌────────────────────────┐
+│        GitHub          │
+│   Source Repository    │
+└─────────┬──────────────┘
+          │ Push to main
+          ▼
+┌────────────────────────┐
+│   GitHub Actions (CI)  │
+│  • Build Docker Images │
+│  • Trivy Security Scan │
+│  • Push to Docker Hub  │
+└─────────┬──────────────┘
+          │ Images
+          ▼
+┌────────────────────────┐
+│      Docker Hub        │
+│  Backend & Frontend    │
+│     Docker Images      │
+└─────────┬──────────────┘
+          │ Pull Images
+          ▼
+┌────────────────────────────────────┐
+│  Self‑Hosted Windows Runner (CD)   │
+│  • Docker Compose                  │
+│  • Backend (Flask)                 │
+│  • Frontend (Nginx)                │
+│  • PostgreSQL DB                   │
+└─────────┬──────────────────────────┘
+          │
+          ▼
+┌────────────────────────┐
+│   Application Running  │
+│  Frontend :8080        │
+│  Backend  :8081        │
+│  /health endpoint      │
+└────────────────────────┘
+```
+
+---
+
 
 ##  Docker Implementation
 
@@ -141,31 +203,40 @@ LOW: x
    - Uses Docker Buildx
    
 3. Login to Docker Hub
+   - Builds the backend Docker image from the backend source code
+   - Uses a Dockerfile with multi-stage build and tests
+   - Creates a ready-to-run backend container image 
 4. Build Backend Image
-5. Build Frontend Image
-6. Run Unit Tests (inside build)
+   - Builds the frontend Docker image using Nginx
+   - Packages static UI files into a lightweight container
+   - Produces a deployable frontend image
+6. Build Frontend Image
+   - Builds the frontend Docker image using Nginx
+   - Packages static UI files into a lightweight container
+   - Produces a deployable frontend image
+7. Run Unit Tests (inside build)
    - Backend testes using pytest
    - Frontend tested using jest
    - Tests run during Docker build stage
 
-7. Trivy Scan (Backend & Frontend)
+8. Trivy Scan (Backend & Frontend)
    - Scans both images
    - Detects vulnerabilities
    - Generates severity report ( LOW -> CRITICAL )
    
-8. Push Images to Docker Hub
+9. Push Images to Docker Hub
    - Images tagged with Docker Hub Username
    - Pushed automatically
    - Ready for deployment
 
- 9. Image Registry (Docker HUb)  
+ 10. Image Registry (Docker HUb)  
     - Backend image pushed
     - frontend image pushed
     - Public repositories
     - CI pipeline handles authentication securely using secrets
     - Demonstrates real production workflow
 
- 10. Deployment Readiness (Staging)
+ 11. Deployment Readiness (Staging)
    Deployment scripts are designed to:
      - Pull latest images
      - Stop old containers
@@ -194,13 +265,52 @@ LOW: x
       - Minimal base images
       - Clean image sizes via multi-stage builds
 
-### Pipeline Flow    
+### CI-CD Pipeline Flow    
 ```
-Git Push
-   ↓
-GitHub Actions
-   ↓
-Build → Test → Scan → Push
+Developer Commit (Git Push)
+          │
+          ▼
+GitHub Repository (main branch)
+          │
+          ▼
+GitHub Actions Workflow Triggered
+          │
+          ▼
+Build Stage
+  ├─ Build Backend Docker Image
+  └─ Build Frontend Docker Image
+          │
+          ▼
+Test Stage
+  ├─ Backend unit tests (Pytest)
+  └─ Frontend tests (Jest)
+          │
+          ▼
+Security Scan Stage
+  ├─ Trivy scan – Backend image
+  └─ Trivy scan – Frontend image
+          │
+          ▼
+Push Stage
+  ├─ Push backend image → Docker Hub
+  └─ Push frontend image → Docker Hub
+          │
+          ▼
+Deploy Stage (Self-Hosted Runner)
+  ├─ Pull latest Docker images
+  ├─ Stop old containers
+  ├─ Start containers using Docker Compose
+  └─ Preserve database volumes
+          │
+          ▼
+Post-Deployment Validation
+  └─ Health check via `/health` endpoint
+          │
+          ▼
+Application Live 
+Frontend → http://localhost:8080  
+Backend  → http://localhost:8081  
+
 ```
 
 ---
@@ -215,6 +325,7 @@ Services:
 
 * Frontend → [http://localhost:8080](http://localhost:8080)
 * Backend → [http://localhost:5000](http://localhost:5000)
+* Health →  [http://localhost:8081/health](http://localhost:8081/health)
 * Database → PostgreSQL container
 
 ---
@@ -229,6 +340,27 @@ Deployment scripts handle:
 * Preserve database volumes
 
 ---
+
+##  Health Check
+
+Backend exposes:
+
+```
+GET /health
+```
+
+Expected response:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+Used for post‑deployment validation.
+
+---
+
 
 ##  Project Structure
 
@@ -250,6 +382,11 @@ capstone-cicd-end-to-end/
 ```
 
 ---
+## Secrets Used (GitHub)
+
+- DOCKER_USERNAME
+- DOCKER_PASSWORD
+Stored securely using GitHub Secrets.
 
 ##  What This Project Demonstrates
 
@@ -257,6 +394,7 @@ capstone-cicd-end-to-end/
 * Secure container practices
 * Production-ready Docker builds
 * Vulnerability scanning
+* Deployment validation
 * Debugging and pipeline recovery
 
 ---
@@ -265,8 +403,6 @@ capstone-cicd-end-to-end/
 
 This project implements a full CI/CD pipeline for a containerized web application using Docker and GitHub Actions. It includes automated builds, unit testing, security scanning with Trivy, image publishing to Docker Hub, and deployment readiness using Docker Compose. The project follows best practices such as multi-stage builds, non-root containers, and environment-based configurations, making it a production-ready DevOps solution.
 
-* DevOps Engineer roles
-* Cloud Engineer roles
 * CI/CD pipeline demonstrations
 
 ---
