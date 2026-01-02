@@ -16,3 +16,9 @@ backups/
 
 # GitHub self-hosted runner files
 actions-runner/
+actions-runner/_work/
+actions-runner/_diag/
+actions-runner/.runner
+actions-runner/_work/
+actions-runner/_diag/
+actions-runner/.runner
