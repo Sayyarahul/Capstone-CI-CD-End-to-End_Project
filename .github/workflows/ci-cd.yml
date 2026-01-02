@@ -5,7 +5,7 @@ on:
     branches: ["main"]
 
 # =========================
-# BUILD + TEST + SCAN + PUSH
+# BUILD + SCAN + PUSH
 # =========================
 jobs:
   build-test-scan-push:
@@ -13,31 +13,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # ---------- BUILD ----------
-      - name: Build Backend Image
+      - name: Build Backend
         run: docker build -t rahulsayya/capstone-backend:latest ./backend
 
-      - name: Build Frontend Image
+      - name: Build Frontend
         run: docker build -t rahulsayya/capstone-frontend:latest ./frontend
 
-      # ---------- SECURITY SCAN ----------
       - name: Trivy Scan Backend
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-backend:latest
-          format: table
           severity: CRITICAL,HIGH
           exit-code: "0"
 
@@ -45,41 +39,61 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-frontend:latest
-          format: table
           severity: CRITICAL,HIGH
           exit-code: "0"
 
-      # ---------- PUSH ----------
-      - name: Push Backend Image
+      - name: Push Backend
         run: docker push rahulsayya/capstone-backend:latest
 
-      - name: Push Frontend Image
+      - name: Push Frontend
         run: docker push rahulsayya/capstone-frontend:latest
 
 
 # =========================
-# DEPLOY (SELF-HOSTED WINDOWS)
+# DEPLOY TO PROD
 # =========================
-  deploy:
+  deploy-prod:
     name: Deploy to Local Server (Prod)
     needs: build-test-scan-push
     runs-on: self-hosted
 
     steps:
-      - name: Deploy using Docker Compose
+      - name: Deploy Prod
         shell: cmd
         run: |
-          echo === Starting deployment ===
+          echo Deploying to PROD...
           cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
-
-          docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml down
+          docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml up -d
 
-      # ---------- HEALTH CHECK ----------
-      - name: Validate Backend Health
+      - name: Health Check (Prod)
         shell: cmd
         run: |
-          echo === Checking backend health ===
           timeout /t 20 >nul
           curl http://localhost:8081/health
+
+
+# =========================
+# DEPLOY TO STAGING
+# =========================
+  deploy-staging:
+    name: Deploy to Local Server (Staging)
+    needs: build-test-scan-push
+    runs-on: self-hosted
+
+    steps:
+      - name: Deploy Staging
+        shell: cmd
+        run: |
+          echo Deploying to STAGING...
+          cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+          docker compose -f docker-compose.staging.yml down
+          docker compose -f docker-compose.staging.yml pull
+          docker compose -f docker-compose.staging.yml up -d
+
+      - name: Health Check (Staging)
+        shell: cmd
+        run: |
+          timeout /t 20 >nul
+          curl http://localhost:8082/health
