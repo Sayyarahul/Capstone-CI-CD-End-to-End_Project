@@ -51,7 +51,6 @@ jobs:
       - name: Push Frontend
         run: docker push rahulsayya/capstone-frontend:latest
 
-
 # =========================
 # DEPLOY TO PRODUCTION
 # =========================
@@ -77,10 +76,10 @@ jobs:
 
           Write-Host "Waiting for backend to become healthy..."
           Start-Sleep -Seconds 20
+
           curl http://localhost:8081/health
 
           Write-Host "========== PRODUCTION DEPLOYMENT COMPLETED =========="
-
 
 # =========================
 # DEPLOY TO STAGING
@@ -107,6 +106,7 @@ jobs:
 
           Write-Host "Waiting for backend to become healthy..."
           Start-Sleep -Seconds 20
+
           curl http://localhost:8082/health
 
           Write-Host "========== STAGING DEPLOYMENT COMPLETED =========="
