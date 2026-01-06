@@ -1,13 +1,22 @@
  ### Capstone-CI_CD-End-to-End_Project ###
 
-A production-style **CI/CD pipeline** that builds, tests, scans, and deploys a **2-tier web application** using **Docker** and **GitHub Actions**,**Trivy**,and a **SelF-Hosted Windows** runner.
+A production-ready **CI/CD pipeline** that automatically builds, tests, scans, and deploys a containerized web application using **Docker**, using **GitHub Actions**,**Trivy**,and a **SelF-Hosted Deployment** runner.
 
 ---
 
 ##  Project Overview
 
-This project demonstrates a workflow where application code changes automatically trigger:
+## Project Overview
 
+This project demonstrates how application changes are automatically
+delivered from source code to a running environment using a secure,
+automated CI/CD pipeline.
+
+It ensures:
+- Faster and reliable deployments
+- Improved security through image scanning
+- Consistent environments using containers
+- Minimal manual intervention
 * Docker image builds
 * Unit testing inside containers
 * Security scanning with Trivy
@@ -19,18 +28,55 @@ This project demonstrates a workflow where application code changes automaticall
 The goal is to showcase **end-to-end CI/CD automation**,Secure container practices, and deployment readiness.
 
 ---
-### Tech Stack ###
-- Layer	                     Tools
-- Source Control	            GitHub
-- CI/CD	                     GitHub Actions
-- Containers	                Docker, Docker Compose
-- Security	                  Trivy
-- Registry	                  Docker Hub
-- Backend	                   Python (Flask)
-- Frontend	                  Nginx / Static UI
-- Database                  	PostgreSQL
-- Runners                    GitHub‑hosted (CI), Self‑hosted Windows (CD)
+## Why This Project Exists
 
+Manual deployments are slow, error-prone, and difficult to scale.
+This project solves that by introducing:
+
+- Automated build and deployment pipelines
+- Security scanning before deployment
+- Environment-based deployments (Staging & Production)
+- Health-validated releases
+
+This ensures stable, repeatable, and production-ready deployments.
+---
+
+## Project Structure
+```
+capstone-cicd-end-to-end/
+├── backend/
+│   ├── app.py
+│   ├── requirements.txt
+│   ├── tests/
+│   └── Dockerfile
+│
+├── frontend/
+│   ├── index.html
+│   ├── nginx.conf
+│   ├── tests/
+│   └── Dockerfile
+│
+├── docker-compose.yml
+├── docker-compose.prod.yml
+├── docker-compose.staging.yml
+│
+├── deploy.sh
+│
+├── .env.dev
+├── .env.staging
+├── .env.prod
+│
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml
+│
+├── actions-runner/        # Self-hosted GitHub runner (NOT committed ideally)
+│
+└── README.md
+```
+* Note:
+  - actions-runner/ is used for local CD execution and is not required to be committed (acceptable for learning projects).
+---
 ##  Architecture Overview
 
 ### Application Stack(2-Tier)
@@ -135,7 +181,20 @@ Live Application
 
 ```
 ---
+## Technology Stack
 
+| Layer | Technology |
+|-----|-----------|
+| Source Control | GitHub |
+| CI/CD | GitHub Actions |
+| Containers | Docker, Docker Compose |
+| Security | Trivy |
+| Registry | Docker Hub |
+| Backend | Python (Flask) |
+| Frontend | Nginx (Static UI) |
+| Database | PostgreSQL |
+| Deployment | Self-Hosted Windows Runner |
+---
 ##  Docker Implementation
 
 ### Docker Used
@@ -334,6 +393,29 @@ Health Check (/health)
 Deployment Success
 ```
 ---
+## Environment Strategy
+
+The project supports multiple deployment environments:
+
+| Environment | Purpose | Compose File |
+|------------|--------|-------------|
+| Development | Local testing | docker-compose.yml |
+| Staging | Pre-production validation | docker-compose.staging.yml |
+| Production | Live environment | docker-compose.prod.yml |
+
+Each environment uses:
+- Separate Docker volumes
+- Separate environment variables
+- Independent deployments
+---
+## Environment Access
+| Service  | URL                                                          |
+| -------- | ------------------------------------------------------------ |
+| Frontend | [http://localhost:8080](http://localhost:8080)               |
+| Backend  | [http://localhost:8081](http://localhost:8081)               |
+| Health   | [http://localhost:8081/health](http://localhost:8081/health) |
+
+---
 ## Deployment Runbook (Step-by-Step)
 1. Pre-Deployment Checks
   - Docker installed & running
@@ -374,11 +456,12 @@ docker ps
 ```
 4. Access Application  
 Service	   URL
-Frontend	 http://localhost:8080
-Backend 	http://localhost:8081
-Health	 http://localhost:8081/health
+* Frontend	 http://localhost:8080
+* Backend 	http://localhost:8081
+* Health	 http://localhost:8081/health
 
 ---
+
 ## Troubleshooting
 * Issue 1: Deploy job fails with /bin/bash: C:\Users... not found
 - Cause
@@ -446,18 +529,20 @@ Services:
 
 ---
 
-##  Deployment (Staging Ready)
+## ## Deployment Process
 
-Deployment scripts handle:
+Deployments are fully automated and include:
 
-* Pull latest Docker images
-* Stop old containers
-* Start new containers
-* Preserve database volumes
-
+- Pulling the latest container images
+- Stopping existing services safely
+- Starting updated services
+- Verifying application health
+   
 ---
 
-##  Health Check
+### Health Validation
+
+After deployment, the backend health endpoint is validated:
 
 Backend exposes:
 
@@ -476,33 +561,13 @@ Expected response:
 Used for post‑deployment validation.
 
 ---
-
-
-##  Project Structure
-
-```
-capstone-cicd-end-to-end/
-├── backend/
-│   ├── app.py
-│   ├── tests/
-│   └── Dockerfile
-├── frontend/
-│   ├── index.html
-│   ├── tests/
-│   └── Dockerfile
-├── docker-compose.yml
-├── docker-compose.prod.yml
-├── scripts/
-├── .github/workflows/ci-cd.yml
-└── README.md
-```
-
----
 ## Secrets Used (GitHub)
 
 - DOCKER_USERNAME
 - DOCKER_PASSWORD
 Stored securely using GitHub Secrets.
+
+---
 
 ##  What This Project Demonstrates
 
