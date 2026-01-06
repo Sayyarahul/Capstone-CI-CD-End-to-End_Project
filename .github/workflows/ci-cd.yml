@@ -61,25 +61,25 @@ jobs:
 
     steps:
       - name: Deploy Production
-        shell: pwsh
+        shell: cmd
         run: |
-          Write-Host "========== DEPLOYING TO PRODUCTION =========="
+          echo ========== DEPLOYING TO PRODUCTION ==========
 
-          cd "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+          cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
 
           docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml up -d
 
-          Write-Host "Running database migrations (PROD)..."
-          ./scripts/migrate.sh prod
+          echo Running database migrations (PROD)...
+          scripts\migrate.sh prod
 
-          Write-Host "Waiting for backend to become healthy..."
-          Start-Sleep -Seconds 20
+          echo Waiting for backend to become healthy...
+          timeout /t 20 >nul
 
           curl http://localhost:8081/health
 
-          Write-Host "========== PRODUCTION DEPLOYMENT COMPLETED =========="
+          echo ========== PRODUCTION DEPLOYMENT COMPLETED ==========
 
 # =========================
 # DEPLOY TO STAGING
@@ -91,21 +91,26 @@ jobs:
 
     steps:
       - name: Deploy Staging
-        shell: pwsh
+        shell: cmd
         run: |
-          Write-Host "========== DEPLOYING TO STAGING =========="
+          echo ========== DEPLOYING TO STAGING ==========
 
-          cd "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+          cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
 
           docker compose -f docker-compose.staging.yml down
           docker compose -f docker-compose.staging.yml pull
           docker compose -f docker-compose.staging.yml up -d
 
-          Write-Host "Running database migrations (STAGING)..."
-          ./scripts/migrate.sh staging
+          echo Running database migrations (STAGING)...
+          scripts\migrate.sh staging
 
-          Write-Host "Waiting for backend to become healthy..."
-          Start-Sleep -Seconds 20
+          echo Waiting for backend to become healthy...
+          timeout /t 20 >nul
+
+          curl http://localhost:8082/health
+
+          echo ========== STAGING DEPLOYMENT COMPLETED ==========
+
 
           curl http://localhost:8082/health
 
