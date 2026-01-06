@@ -1,83 +1,103 @@
- ### Capstone-CI_CD-End-to-End_Project ###
+ ### Capstone-CI_CD-End-to-End_Project ##
+## Introduction
+This project implements a complete, automated CI/CD pipeline for a modern web application using Docker and GitHub Actions. It demonstrates how code changes move seamlessly from development to staging and production environments with minimal human involvement.
 
-A production-ready **CI/CD pipeline** that automatically builds, tests, scans, and deploys a containerized web application using **Docker**, using **GitHub Actions**,**Trivy**,and a **SelF-Hosted Deployment** runner.
+The system is designed to ensure that every update is:
+ - Built and tested automatically
+ - Security-scanned before release
+ - Packaged into optimized container images
+ - Deployed reliably with version control and rollback support
+ - Validated through health checks
+
+This project is focusing on automation, security, and deployment reliability. It provides a scalable foundation for organizations seeking faster delivery cycles, consistent environments, and production-ready infrastructure
 
 ---
 
-##  Project Overview
-
 ## Project Overview
+This project delivers a fully automated CI/CD system that builds, tests, secures, and deploys a containerized web application across staging and production environments.
 
-This project demonstrates how application changes are automatically
-delivered from source code to a running environment using a secure,
-automated CI/CD pipeline.
+Every code change pushed to the repository triggers a structured pipeline that:
+- Builds optimized Docker images using best practices
+- Runs automated unit tests inside containers
+- Scans images for security vulnerabilities with Trivy
+- Publishes verified images to Docker Hub
+- Deploys the application using Docker Compose on a self-hosted server
+- Validates deployment through automated health checks
+ 
+The application follows a two-tier architecture with a Flask backend, a static frontend served by Nginx, and a PostgreSQL database with persistent storage. Environment-specific configurations enable safe promotion of changes from staging to production without modifying application code.
 
-It ensures:
-- Faster and reliable deployments
-- Improved security through image scanning
-- Consistent environments using containers
-- Minimal manual intervention
-* Docker image builds
-* Unit testing inside containers
-* Security scanning with Trivy
-* Image push to Docker Hub
-* Deployment-ready artifacts
-* Deployment using Docker Compose
-* Post-deployment health validation
-  
-The goal is to showcase **end-to-end CI/CD automation**,Secure container practices, and deployment readiness.
+This project is designed to demonstrate real-world DevOps workflows, emphasizing:
+
+- End-to-end automation
+- Secure and optimized container design
+- Environment consistency
+- Deployment reliability and recovery readiness
+
+It serves as a production-style reference implementation for teams looking to adopt modern CI/CD practices using Docker and GitHub Actions
 
 ---
 ## Why This Project Exists
 
-Manual deployments are slow, error-prone, and difficult to scale.
+Manual deployments are slow, error-prone, and difficult to scale in modern applications environments. They often lead to inconsistent releases, configuration drift, and operational risk. 
+
 This project solves that by introducing:
 
-- Automated build and deployment pipelines
+- Automated build,test and deployment pipelines
 - Security scanning before deployment
 - Environment-based deployments (Staging & Production)
 - Health-validated releases
+- This ensures stable, repeatable, and production-ready deployments
 
-This ensures stable, repeatable, and production-ready deployments.
+Together, these practices enable stable, repeatable, and production-ready deployments, reducing human error while improving release speed, reliability, and security.
+
 ---
 
 ## Project Structure
 ```
 capstone-cicd-end-to-end/
-├── backend/
+│
+├── backend/                 # Flask API
 │   ├── app.py
-│   ├── requirements.txt
 │   ├── tests/
 │   └── Dockerfile
 │
-├── frontend/
+├── frontend/                # Nginx Static UI
 │   ├── index.html
-│   ├── nginx.conf
 │   ├── tests/
 │   └── Dockerfile
 │
-├── docker-compose.yml
-├── docker-compose.prod.yml
-├── docker-compose.staging.yml
+├── db/
+│   └── migrations/          # Database versioned migrations
+│       ├── 000_schema_migrations.sql
+│       ├── 001_init.sql
+│       └── 002_add_email.sql
 │
-├── deploy.sh
+├── scripts/                 # Operations scripts
+│   ├── deploy.sh
+│   ├── migrate.sh
+│   └── rollback.sh
+│
+├── .github/workflows/
+│   └── ci-cd.yml            # CI/CD Pipeline
+│
+├── docker-compose.dev.yml
+├── docker-compose.staging.yml
+├── docker-compose.prod.yml
 │
 ├── .env.dev
 ├── .env.staging
 ├── .env.prod
 │
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yml
-│
-├── actions-runner/        # Self-hosted GitHub runner (NOT committed ideally)
-│
+├── docs/                    # Architecture & pipeline diagrams
+├── backups/                 # DB backups
+├── logs/
 └── README.md
+
 ```
 * Note:
   - actions-runner/ is used for local CD execution and is not required to be committed (acceptable for learning projects).
 ---
-##  Architecture Overview
+## Architecture Overview
 
 ### Application Stack(2-Tier)
 
@@ -174,10 +194,12 @@ Self-Hosted Windows Runner (CD)
       ├─ docker compose pull
       ├─ docker compose down
       ├─ docker compose up -d
+      ├─ Run DB migrations
       └─ Health Check Validation
       │
       ▼
-Live Application 
+Live Application (Prod & Staging)
+
 
 ```
 ---
@@ -387,10 +409,14 @@ docker compose pull
 docker compose up -d
    │
    ▼
+Run DB Migrations
+   │
+   ▼
 Health Check (/health)
    │
    ▼
 Deployment Success
+
 ```
 ---
 ## Environment Strategy
@@ -415,6 +441,28 @@ Each environment uses:
 | Backend  | [http://localhost:8081](http://localhost:8081)               |
 | Health   | [http://localhost:8081/health](http://localhost:8081/health) |
 
+---
+## Database Migrations 
+* version-tracked migrations
+* Runs automatically deployments
+* Environment -aware (DEv/staging/Prod)
+## Manual Migration 
+```
+./scripts/migrate.sh dev
+./scripts/migrate.sh staging
+./scripts/migrate.sh prod
+```
+* Uses schema_migrations table to prevent duplicate migrations
+* Logs applied versions
+---
+## Rollback Support
+* If a deployment Fails, rollback to the previous image:
+```
+./scripts/rollback.sh
+```
+- Stops current containers
+- Reverts to previous Docker image tags
+- Restarts services safely
 ---
 ## Deployment Runbook (Step-by-Step)
 1. Pre-Deployment Checks
@@ -529,7 +577,7 @@ Services:
 
 ---
 
-## ## Deployment Process
+## Deployment Process
 
 Deployments are fully automated and include:
 
@@ -584,9 +632,26 @@ Stored securely using GitHub Secrets.
 
 ##  Conclusion
 
-This project implements a full CI/CD pipeline for a containerized web application using Docker and GitHub Actions. It includes automated builds, unit testing, security scanning with Trivy, image publishing to Docker Hub, and deployment readiness using Docker Compose. The project follows best practices such as multi-stage builds, non-root containers, and environment-based configurations, making it a production-ready DevOps solution.
+This project delivers a fully automated CI/CD pipeline that takes application code from GitHub to a running production system with zero manual deployment.
+* Every update is:
+ - Built automatically
+ - Tested and security-scanned
+ - Packaged into optimized Docker images
+ - Deployed to staging and production environments
+ - Verified with health checks
+ - Protected with rollback and migration support
+* The result is a system that is fast, reliable, and production-ready.
+## Why This Matters
+- Reduces deployment time from hours to minutes
+- Eliminates human error in releases
+- Improves security through automated scanning
+- Ensures stable deployments with validation and rollback
 
-* CI/CD pipeline demonstrations
+## Final Result
+
+- This project shows how modern DevOps works in real life:
+ secure builds, automated deployments, and dependable releases.
+- It is not just a demo—it is a working, scalable delivery system suitable for real-  world applications.
 
 ---
 
