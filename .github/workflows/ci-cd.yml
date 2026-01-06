@@ -5,11 +5,7 @@ on:
     branches: ["main"]
 
 # =========================
-<<<<<<< HEAD
-# BUILD + TEST + SCAN + PUSH
-=======
 # BUILD + SCAN + PUSH
->>>>>>> 188df789cf8cf20c75f38a94a725574a9efb9b12
 # =========================
 jobs:
   build-test-scan-push:
@@ -29,25 +25,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # ---------- BUILD ----------
-      - name: Build Backend Image
+      - name: Build Backend
         run: docker build -t rahulsayya/capstone-backend:latest ./backend
 
-      - name: Build Frontend Image
+      - name: Build Frontend
         run: docker build -t rahulsayya/capstone-frontend:latest ./frontend
 
-<<<<<<< HEAD
-      # ---------- SECURITY SCAN ----------
-=======
->>>>>>> 188df789cf8cf20c75f38a94a725574a9efb9b12
       - name: Trivy Scan Backend
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-backend:latest
-<<<<<<< HEAD
-          format: table
-=======
->>>>>>> 188df789cf8cf20c75f38a94a725574a9efb9b12
           severity: CRITICAL,HIGH
           exit-code: "0"
 
@@ -55,69 +42,44 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: rahulsayya/capstone-frontend:latest
-<<<<<<< HEAD
-          format: table
-=======
->>>>>>> 188df789cf8cf20c75f38a94a725574a9efb9b12
           severity: CRITICAL,HIGH
           exit-code: "0"
 
-      # ---------- PUSH ----------
-      - name: Push Backend Image
+      - name: Push Backend
         run: docker push rahulsayya/capstone-backend:latest
 
-      - name: Push Frontend Image
+      - name: Push Frontend
         run: docker push rahulsayya/capstone-frontend:latest
 
 
 # =========================
-<<<<<<< HEAD
-# DEPLOY (SELF-HOSTED WINDOWS)
-# =========================
-  deploy:
-=======
-# DEPLOY TO PROD
+# DEPLOY TO PRODUCTION
 # =========================
   deploy-prod:
->>>>>>> 188df789cf8cf20c75f38a94a725574a9efb9b12
     name: Deploy to Local Server (Prod)
     needs: build-test-scan-push
     runs-on: self-hosted
 
     steps:
-<<<<<<< HEAD
-      - name: Deploy using Docker Compose
-        shell: cmd
+      - name: Deploy Production
+        shell: pwsh
         run: |
-          echo === Starting deployment ===
-          cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+          Write-Host "========== DEPLOYING TO PRODUCTION =========="
 
-          docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml down
-          docker compose -f docker-compose.prod.yml up -d
+          cd "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
 
-      # ---------- HEALTH CHECK ----------
-      - name: Validate Backend Health
-        shell: cmd
-        run: |
-          echo === Checking backend health ===
-          timeout /t 20 >nul
-          curl http://localhost:8081/health
-=======
-      - name: Deploy Prod
-        shell: cmd
-        run: |
-          echo Deploying to PROD...
-          cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
           docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml pull
           docker compose -f docker-compose.prod.yml up -d
 
-      - name: Health Check (Prod)
-        shell: cmd
-        run: |
-          timeout /t 20 >nul
+          Write-Host "Running database migrations (PROD)..."
+          ./scripts/migrate.sh prod
+
+          Write-Host "Waiting for backend to become healthy..."
+          Start-Sleep -Seconds 20
           curl http://localhost:8081/health
+
+          Write-Host "========== PRODUCTION DEPLOYMENT COMPLETED =========="
 
 
 # =========================
@@ -125,22 +87,26 @@ jobs:
 # =========================
   deploy-staging:
     name: Deploy to Local Server (Staging)
-    needs: build-test-scan-push
+    needs: deploy-prod
     runs-on: self-hosted
 
     steps:
       - name: Deploy Staging
-        shell: cmd
+        shell: pwsh
         run: |
-          echo Deploying to STAGING...
-          cd /d "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+          Write-Host "========== DEPLOYING TO STAGING =========="
+
+          cd "C:\Users\Rahul Sayya\Capstone project_CICD End-to-End Project"
+
           docker compose -f docker-compose.staging.yml down
           docker compose -f docker-compose.staging.yml pull
           docker compose -f docker-compose.staging.yml up -d
 
-      - name: Health Check (Staging)
-        shell: cmd
-        run: |
-          timeout /t 20 >nul
+          Write-Host "Running database migrations (STAGING)..."
+          ./scripts/migrate.sh staging
+
+          Write-Host "Waiting for backend to become healthy..."
+          Start-Sleep -Seconds 20
           curl http://localhost:8082/health
->>>>>>> 188df789cf8cf20c75f38a94a725574a9efb9b12
+
+          Write-Host "========== STAGING DEPLOYMENT COMPLETED =========="
