@@ -654,6 +654,8 @@ This project delivers a fully automated CI/CD pipeline that takes application co
 - It is not just a demo—it is a working, scalable delivery system suitable for real-  world applications.
 
 ---
+## Medium link
+https://medium.com/@rahuluma28/capstone-project-end-to-end-project-bb04265592ae?postPublishedType=initial
 
 ##  Author
 
